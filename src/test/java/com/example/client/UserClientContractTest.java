@@ -29,25 +29,27 @@ public class UserClientContractTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
-        return builder.given("user with id 123 exists")
+        return builder
+                .given("user with id 123 exists")
                 .uponReceiving("a request for user 123")
-                .path("/users/123")
-                .method("GET")
+                    .path("/users/123")
+                    .method("GET")
                 .willRespondWith()
-                .status(200)
-                .headers(headers)
-                .body("{\"id\": 123, \"name\": \"John Doe\", \"email\": \"john.doe@example.com\"}")
+                    .status(200)
+                    .headers(headers)
+                    .body("{\"id\": 123, \"name\": \"John Doe\", \"email\": \"john.doe@example.com\"}")
                 .toPact();
     }
 
     @Pact(consumer = "UserConsumer", provider = "UserProvider")
     public RequestResponsePact missingUserPact(PactDslWithProvider builder) {
-        return builder.given("user with id 123 exists")
+        return builder
+                .given("user with id 123 exists")
                 .uponReceiving("a request for user 1")
-                .path("/users/1")
-                .method("GET")
+                    .path("/users/1")
+                    .method("GET")
                 .willRespondWith()
-                .status(404)
+                    .status(404)
                 .toPact();
     }
 
