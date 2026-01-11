@@ -6,51 +6,31 @@ import au.com.dius.pact.provider.junit5.PactVerificationInvocationContextProvide
 import au.com.dius.pact.provider.junitsupport.Provider;
 import au.com.dius.pact.provider.junitsupport.State;
 import au.com.dius.pact.provider.junitsupport.loader.PactFolder;
-import au.com.dius.pact.provider.junitsupport.target.TestTarget;
 import com.example.model.User;
-import com.google.gson.Gson;
-import com.sun.net.httpserver.HttpServer;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Provider("UserProvider")
 @PactFolder("target/pacts")
-@ExtendWith(PactVerificationInvocationContextProvider.class)
+@ExtendWith({SpringExtension.class, PactVerificationInvocationContextProvider.class})
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserProviderContractTest {
 
-    @TestTarget
-    public final HttpTestTarget target = new HttpTestTarget("localhost", 8080);
+    @LocalServerPort
+    private int port;
 
-    private static HttpServer server;
-    private static final Gson gson = new Gson();
-    private static final UserController controller = new UserController();
+    @Autowired
+    private UserController userController;
 
-    @BeforeAll
-    public static void startServer() throws IOException {
-        server = HttpServer.create(new InetSocketAddress(8080), 0);
-
-        server.createContext("/users/123", exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
-                User user = controller.getUserById(123L);
-                String response = gson.toJson(user);
-
-                exchange.getResponseHeaders().add("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, response.getBytes().length);
-
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                }
-            }
-        });
-
-        server.start();
+    @BeforeEach
+    void setup(PactVerificationContext context) {
+        context.setTarget(new HttpTestTarget("localhost", port));
     }
 
     @TestTemplate
@@ -60,26 +40,14 @@ public class UserProviderContractTest {
 
     @State("user with id 123 exists")
     public void userWithId123Exists() {
-        // Clear any existing data
-        controller.clearUsers();
-
-        // Set up the specific state required for this test
+        userController.clearUsers();
         User testUser = new User(123L, "John Doe", "john.doe@example.com");
-        controller.addUser(testUser);
-
+        userController.addUser(testUser);
         System.out.println("Provider state set up: User 123 created");
     }
 
     @AfterEach
     public void cleanupState() {
-        // Clean up after each test to ensure isolation
-        controller.clearUsers();
-    }
-
-    @AfterAll
-    public static void stopServer() {
-        if (server != null) {
-            server.stop(0);
-        }
+        userController.clearUsers();
     }
 }
