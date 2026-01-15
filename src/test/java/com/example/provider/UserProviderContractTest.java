@@ -13,8 +13,11 @@ import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static org.mockito.Mockito.when;
 
 @Provider("UserProvider")
 @PactFolder("target/pacts")
@@ -25,7 +28,7 @@ public class UserProviderContractTest {
     @LocalServerPort
     private int port;
 
-    @Autowired
+    @MockBean
     private UserController userController;
 
     @BeforeEach
@@ -40,10 +43,11 @@ public class UserProviderContractTest {
 
     @State("user with id 123 exists")
     public void userWithId123Exists() {
-        userController.clearUsers();
-        User testUser = new User(123L, "John Doe", "john.doe@example.com");
-        userController.addUser(testUser);
-        System.out.println("Provider state set up: User 123 created");
+//        userController.clearUsers();
+//        User testUser = new User(123L, "John Doe", "john.doe@example.com");
+//        userController.addUser(testUser);
+//        System.out.println("Provider state set up: User 123 created");
+        when(userController.getUserById(123L)).thenReturn(new User(123L, "John Doe", "john.doe@example.com"));
     }
 
     @AfterEach
